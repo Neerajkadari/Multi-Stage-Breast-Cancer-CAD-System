@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breast Cancer CAD System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff4d94;
+            --secondary: #704dff;
+            --bg-dark: #0f0c29;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(to right, #ff4d94, #704dff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .upload-section {
+            border: 2px dashed var(--glass-border);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 30px;
+        }
+
+        .upload-section:hover {
+            border-color: var(--primary);
+            background: rgba(255, 77, 148, 0.05);
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border: none;
+            padding: 12px 30px;
+            border-radius: 30px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .results {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 40px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .result-card img {
+            max-width: 100%;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        .metrics {
+            grid-column: span 2;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .metric-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+
+        .metric-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .loader {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--glass-border);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Breast Cancer CAD</h1>
+            <p>Advanced Computer-Aided Diagnosis System</p>
+        </header>
+
+        <div class="upload-section" onclick="document.getElementById('fileInput').click()">
+            <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px;">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <p>Click or Drag Mammogram Image Here</p>
+            <input type="file" id="fileInput" accept="image/*" onchange="handleUpload(event)">
+        </div>
+
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+            <p style="margin-top: 15px;">Analyzing Scan...</p>
+        </div>
+
+        <div class="results" id="results">
+            <div class="result-card">
+                <h3>YOLOv8 Detection</h3>
+                <img id="detImg" src="" alt="Detection Results">
+            </div>
+            <div class="result-card">
+                <h3>Connected-UNet Segmentation</h3>
+                <img id="segImg" src="" alt="Segmentation Results">
+            </div>
+            <div class="result-card" style="grid-column: span 2;">
+                <h3>ResNet Ensemble Classification</h3>
+                <div class="metrics" style="margin-top: 20px;">
+                    <div class="metric-item">
+                        <div class="metric-label">Pathology</div>
+                        <div class="metric-value" id="pathologyVal">-</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">BI-RADS</div>
+                        <div class="metric-value" id="biradsVal">-</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Shape</div>
+                        <div class="metric-value" id="shapeVal">-</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Confidence</div>
+                        <div class="metric-value" id="confVal">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function handleUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                document.getElementById('detImg').src = 'data:image/jpeg;base64,' + data.det_img;
+                document.getElementById('segImg').src = 'data:image/jpeg;base64,' + data.seg_img;
+                document.getElementById('pathologyVal').innerText = data.pathology;
+                document.getElementById('biradsVal').innerText = data.birads;
+                document.getElementById('shapeVal').innerText = data.shape;
+                document.getElementById('confVal').innerText = (data.confidence * 100).toFixed(1) + '%';
+
+                document.getElementById('results').style.display = 'grid';
+            } catch (err) {
+                console.error(err);
+                alert('An error occurred during prediction.');
+            } finally {
+                document.getElementById('loader').style.display = 'none';
+            }
+        }
+    </script>
+</body>
+
+</html>
